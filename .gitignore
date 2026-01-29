@@ -1,3 +1,6 @@
 /.env
 /.venv
 /info
+
+# Ignore GitHub Actions workflows - all actions have been cleared
+.github/workflows/
