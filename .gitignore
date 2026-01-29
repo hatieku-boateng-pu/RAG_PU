@@ -2,5 +2,5 @@
 /.venv
 /info
 
-# Ignore GitHub Actions workflows - all actions have been cleared
+# Prevent GitHub Actions workflows from being tracked
 .github/workflows/
