@@ -33,19 +33,19 @@ jobs:
     - name: Lint with flake8
       run: |
         # Stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv,.git,__pycache__
+        # Exit-zero treats all errors as warnings. Check for common code quality issues
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude=.venv,.git,__pycache__
     
     - name: Check code formatting with black
       run: |
-        black --check --diff .
+        black --check --diff --exclude="/(\.venv|\.git|__pycache__)/" .
       continue-on-error: true
     
     - name: Run tests
       run: |
-        # Run pytest if tests exist
-        if [ -d "tests" ] || find . -name "test_*.py" | grep -q .; then
+        # Run pytest if tests exist, excluding virtual environments
+        if [ -d "tests" ] || find . -path "./.venv" -prune -o -path "./.git" -prune -o -name "test_*.py" -print | grep -q .; then
           pytest --cov=. --cov-report=xml --cov-report=term
         else
           echo "No tests found, skipping test execution"
@@ -56,6 +56,7 @@ jobs:
       if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella

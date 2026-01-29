@@ -40,18 +40,22 @@ jobs:
     
     - name: Validate scripts
       run: |
-        for script in scripts/*.py; do
-          if [ -f "$script" ]; then
-            echo "Validating $script"
-            python -m py_compile "$script"
-          fi
-        done
-        echo "All scripts validated successfully"
+        if [ -d "scripts" ] && [ -n "$(ls -A scripts/*.py 2>/dev/null)" ]; then
+          for script in scripts/*.py; do
+            if [ -f "$script" ]; then
+              echo "Validating $script"
+              python -m py_compile "$script"
+            fi
+          done
+          echo "All scripts validated successfully"
+        else
+          echo "No scripts found to validate"
+        fi
     
     - name: Check for common issues
       run: |
-        # Check for hardcoded secrets or API keys
-        if grep -rn "sk-[a-zA-Z0-9]\{48\}" --include="*.py" .; then
+        # Check for hardcoded secrets or API keys (including project keys)
+        if grep -rEn "sk-(proj-)?[a-zA-Z0-9_-]{20,}" --include="*.py" .; then
           echo "Warning: Potential hardcoded API keys found"
           exit 1
         fi
