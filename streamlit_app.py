@@ -191,7 +191,7 @@ st.markdown("""
 
     .stChatMessage {
         padding: 1rem;
-        border-radius: 0.75rem;
+        border-radius: 0.9rem;
         margin-bottom: 1rem;
     }
 
@@ -209,17 +209,40 @@ st.markdown("""
 
     [data-testid="stChatMessage"] {
         border: 1px solid var(--border);
-        background: #020617;
-        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.5);
+        background: rgba(2, 6, 23, 0.7);
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.35);
         color: var(--text);
     }
 
     [data-testid="stChatMessage"][data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-user"]) {
-        background: rgba(15, 23, 42, 0.9);
+        border-color: rgba(148, 163, 184, 0.5);
+        background: rgba(30, 41, 59, 0.85);
     }
 
     .st-emotion-cache-1v0mbdj {
         border-radius: 10px;
+    }
+
+    [data-testid="stChatMessage"]:has([data-testid="chatAvatarIcon-assistant"]) {
+        border-color: rgba(56, 189, 248, 0.25);
+        background: rgba(15, 23, 42, 0.95);
+    }
+
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        max-width: 800px;
+    }
+
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] li {
+        font-size: 1rem;
+    }
+
+    [data-testid="chatAvatarIcon-user"],
+    [data-testid="chatAvatarIcon-assistant"] {
+        background: rgba(148, 163, 184, 0.12);
+        border-radius: 50%;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        padding: 0.15rem;
     }
 
     h1 {
