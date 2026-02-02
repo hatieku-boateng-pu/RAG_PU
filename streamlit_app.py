@@ -677,6 +677,7 @@ def handle_user_prompt(prompt: str):
 
 if st.session_state.user_role is None:
     st.markdown("### Access")
+    st.caption("Welcome! Choose the access mode that best fits your session so we can personalize your experience.")
     role_choice = st.radio("Choose how to use the assistant:", ["Guest", "Admin"])
     if role_choice == "Admin":
         password_input = st.text_input("Admin password", type="password")
@@ -813,6 +814,20 @@ with st.sidebar:
         """)
 
 # Main content
+st.markdown(
+    """
+    <div class="pu-hero">
+        <div class="pu-hero-title">Hi there! 👋 Welcome to the Pentecost University AI Knowledge Assistant</div>
+        <div class="pu-hero-subtitle">
+            Ask questions, explore course materials, and get clear, supportive answers powered by your document library.
+            We’re here to make your learning journey smoother and more delightful.
+        </div>
+        <div class="pu-badge">✨ Friendly • Accurate • Document-grounded</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 kb_id = st.session_state.get("selected_vector_store")
 
 kb_files: list[str] = []
@@ -856,7 +871,10 @@ if prompt := st.chat_input("Ask me anything about your documents..."):
 
 # Welcome message if chat is empty
 if len(st.session_state.messages) == 0:
-    st.info("👋 Welcome! Ask me anything about your documents. I'll search through the knowledge base to provide accurate answers.")
+    st.info(
+        "👋 Welcome! Ask me anything about your documents. I’ll search the knowledge base and respond with clear, "
+        "supportive answers you can trust."
+    )
     
     # Suggested questions
     st.subheader("💡 Suggested Questions")
@@ -865,8 +883,8 @@ if len(st.session_state.messages) == 0:
     questions = [
         "📋 What topics are covered in the documents?",
         "🎯 What are the key learning objectives?",
-        "📄 Can you provide a summary of the main document?",
-        "🔑 What are the most important concepts?"
+        "📄 Can you share a friendly summary of the main document?",
+        "🔑 What are the most important concepts to focus on first?"
     ]
 
     cols = st.columns(2)
