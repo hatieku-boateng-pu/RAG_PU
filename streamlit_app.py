@@ -466,12 +466,27 @@ def create_thread():
         return None
 
 
-def _transcribe_audio(audio_bytes: bytes) -> str | None:
+def _transcribe_audio(audio_bytes: bytes, mime_type: str | None = None) -> str | None:
     if not audio_bytes:
         return None
     try:
         audio_file = io.BytesIO(audio_bytes)
-        audio_file.name = "voice-question.wav"
+        # Determine file extension based on MIME type, falling back to WAV
+        mime_to_ext = {
+            "audio/mpeg": "mp3",
+            "audio/mp3": "mp3",
+            "audio/mp4": "mp4",
+            "audio/mpeg3": "mp3",
+            "audio/x-mpeg-3": "mp3",
+            "audio/x-m4a": "m4a",
+            "audio/m4a": "m4a",
+            "audio/mpga": "mpga",
+            "audio/wav": "wav",
+            "audio/x-wav": "wav",
+            "audio/webm": "webm",
+        }
+        ext = mime_to_ext.get(mime_type, "wav")
+        audio_file.name = f"voice-question.{ext}"
         model = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
         transcript = client.audio.transcriptions.create(
             model=model,
