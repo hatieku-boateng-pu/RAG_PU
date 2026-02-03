@@ -492,7 +492,7 @@ def _clean_text_for_tts(text: str) -> str:
     Extracts only the main content before the "**Sources:**" section.
     """
     if not text:
-        return text
+        return ""
     
     # Remove the sources section (everything from "**Sources:**" onwards)
     if "**Sources:**" in text:
@@ -532,8 +532,8 @@ def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     if len(trimmed) > max_chars:
         truncated = True
         parts = trimmed[:max_chars].rsplit(" ", 1)
-        # Use the first part if we split successfully and it's not empty
-        trimmed = parts[0] if len(parts) > 1 and parts[0] else trimmed[:max_chars]
+        # Use the first part if we split successfully (2 parts) and it's not empty
+        trimmed = parts[0] if len(parts) == 2 and parts[0] else trimmed[:max_chars]
     model = os.getenv("OPENAI_TTS_MODEL", "tts-1")
     voice = os.getenv("OPENAI_TTS_VOICE", "alloy")
     try:
