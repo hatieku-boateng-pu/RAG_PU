@@ -215,6 +215,43 @@ Running `python streamlit_app.py` will not start Streamlit. This repo includes a
 
 ## 8) UI behavior
 
+### 🎙️ Voice Chat
+
+The application includes a **live voice chat feature** that enables voice-based interactions:
+
+**Features:**
+- **Voice Input**: Record questions using your microphone instead of typing
+- **Audio Transcription**: Automatic speech-to-text using OpenAI Whisper
+- **Text-to-Speech Output**: Assistant responses are read aloud automatically
+- **Smart Processing**: Duplicate detection prevents reprocessing the same recording
+
+**How to use:**
+1. In the sidebar, find the **🎙️ Voice Chat** section
+2. Toggle **"Enable voice input and audio replies"** to ON
+3. In the main chat area, expand **"🎙️ Ask with your voice"**
+4. Click the microphone icon to record your question
+5. The audio is transcribed and processed automatically
+6. Listen to the audio response that plays below the assistant's text reply
+
+**Requirements:**
+- Streamlit 1.32.0 or higher (included in requirements.txt)
+- Modern browser with microphone access
+- OpenAI API key with Whisper and TTS access
+
+**Configuration (optional):**
+Add these to your `.env` file to customize voice chat:
+```env
+OPENAI_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe  # Transcription model
+OPENAI_TTS_MODEL=gpt-4o-mini-tts                # Text-to-speech model
+OPENAI_TTS_VOICE=alloy                          # Voice (alloy, echo, fable, onyx, nova, shimmer)
+```
+
+**Limitations:**
+- Responses longer than 2000 characters won't generate audio
+- Audio processing takes a few seconds
+
+For detailed voice chat documentation, see [VOICE_CHAT_GUIDE.md](VOICE_CHAT_GUIDE.md).
+
 ### Suggested questions
 
 When the chat is empty, the UI shows suggested questions.
