@@ -535,7 +535,8 @@ def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
             return speech.content, truncated
     except Exception as e:
         st.error(f"Error generating voice output: {e}")
-    return None, truncated
+        return None, False
+    return None, False
 
 
 def _is_link_request(user_message: str) -> bool:
