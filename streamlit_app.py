@@ -499,7 +499,7 @@ def _clean_text_for_tts(text: str) -> str:
         text = text.split("**Sources:**")[0].strip()
     
     # Remove markdown links but keep the link text: [text](url) -> text
-    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
     
     # Remove bold/italic markers using non-greedy quantifiers
     # Process bold first, then italic to handle nested cases correctly
@@ -531,7 +531,9 @@ def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     truncated = False
     if len(trimmed) > max_chars:
         truncated = True
-        trimmed = trimmed[:max_chars].rsplit(" ", 1)[0] or trimmed[:max_chars]
+        parts = trimmed[:max_chars].rsplit(" ", 1)
+        # Use the first part if we split successfully and it's not empty
+        trimmed = parts[0] if len(parts) > 1 and parts[0] else trimmed[:max_chars]
     model = os.getenv("OPENAI_TTS_MODEL", "tts-1")
     voice = os.getenv("OPENAI_TTS_VOICE", "alloy")
     try:
