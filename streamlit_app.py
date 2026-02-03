@@ -487,7 +487,7 @@ def _transcribe_audio(audio_bytes: bytes, mime_type: str | None = None) -> str |
         }
         ext = mime_to_ext.get(mime_type, "wav")
         audio_file.name = f"voice-question.{ext}"
-        model = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
+        model = os.getenv("OPENAI_TRANSCRIBE_MODEL", "whisper-1")
         transcript = client.audio.transcriptions.create(
             model=model,
             file=audio_file,
