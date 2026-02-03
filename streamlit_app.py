@@ -478,7 +478,8 @@ def _transcribe_audio(audio_bytes: bytes) -> str | None:
             file=audio_file,
         )
         text = getattr(transcript, "text", None)
-        return text.strip() if text else None
+        cleaned = text.strip() if text else ""
+        return cleaned or None
     except Exception as e:
         st.error(f"Error transcribing audio: {e}")
         return None
@@ -975,12 +976,16 @@ if st.session_state.get("voice_chat_enabled") and hasattr(st, "audio_input"):
             if audio_bytes:
                 audio_hash = hashlib.sha256(audio_bytes).hexdigest()
                 if audio_hash != st.session_state.last_audio_hash:
-                    st.session_state.last_audio_hash = audio_hash
                     with st.spinner("Transcribing your audio..."):
                         transcript = _transcribe_audio(audio_bytes)
                     if transcript:
+                        st.session_state.last_audio_hash = audio_hash
                         st.markdown(f"**Transcription:** {transcript}")
                         handle_user_prompt(transcript)
+                    else:
+                        st.info("Could not transcribe that clip. Please try again.")
+                else:
+                    st.caption("This recording was already processed. Record a new clip to retry.")
 
 # Chat input
 if prompt := st.chat_input("Ask me anything about your documents..."):
