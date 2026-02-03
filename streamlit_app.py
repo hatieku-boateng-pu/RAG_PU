@@ -501,9 +501,10 @@ def _clean_text_for_tts(text: str) -> str:
     # Remove markdown links but keep the link text: [text](url) -> text
     text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
     
-    # Remove bold/italic markers: **text** or *text* -> text
-    text = re.sub(r'\*\*([^\*]+)\*\*', r'\1', text)
-    text = re.sub(r'\*([^\*]+)\*', r'\1', text)
+    # Remove bold/italic markers using non-greedy quantifiers
+    # Process bold first, then italic to handle nested cases correctly
+    text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    text = re.sub(r'\*(.+?)\*', r'\1', text)
     
     # Remove code blocks: `code` -> code
     text = re.sub(r'`([^`]+)`', r'\1', text)
