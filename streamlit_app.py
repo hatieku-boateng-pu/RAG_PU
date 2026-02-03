@@ -466,6 +466,56 @@ def create_thread():
         return None
 
 
+def _validate_audio_input(audio_bytes: bytes) -> tuple[bool, str | None]:
+    """
+    Validate audio input for size and basic format checks.
+    
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    if not audio_bytes:
+        return False, "Audio data is empty"
+    
+    # Check file size (max 25 MB to prevent resource exhaustion)
+    # OpenAI API limit is 25 MB for audio files
+    max_size = int(os.getenv("MAX_AUDIO_SIZE_MB", "25")) * 1024 * 1024
+    audio_size = len(audio_bytes)
+    
+    if audio_size > max_size:
+        max_mb = max_size / (1024 * 1024)
+        actual_mb = audio_size / (1024 * 1024)
+        return False, f"Audio file too large ({actual_mb:.1f} MB). Maximum allowed: {max_mb:.0f} MB"
+    
+    if audio_size < 100:  # Minimum reasonable size for audio
+        return False, "Audio file too small to be valid"
+    
+    # Basic format validation by checking common audio file signatures
+    supported_signatures = {
+        b'RIFF': 'WAV',
+        b'ID3': 'MP3',
+        b'\xff\xfb': 'MP3',
+        b'\xff\xf3': 'MP3',
+        b'\xff\xf2': 'MP3',
+        b'ftyp': 'M4A/MP4',
+        b'OggS': 'OGG',
+        b'\x1a\x45\xdf\xa3': 'WEBM',
+    }
+    
+    # Check first few bytes for known audio signatures
+    header = audio_bytes[:12]
+    is_recognized = False
+    
+    for signature, fmt in supported_signatures.items():
+        if signature in header:
+            is_recognized = True
+            break
+    
+    if not is_recognized:
+        return False, "Unsupported or invalid audio format. Please use WAV, MP3, M4A, or WEBM"
+    
+    return True, None
+
+
 def _transcribe_audio(audio_bytes: bytes, mime_type: str | None = None) -> str | None:
     if not audio_bytes:
         return None
@@ -1001,19 +1051,24 @@ if st.session_state.get("voice_chat_enabled") and hasattr(st, "audio_input"):
                 else audio_prompt.read()
             )
             if audio_bytes:
-                audio_hash = hashlib.sha256(audio_bytes).hexdigest()
-                if audio_hash != st.session_state.last_audio_hash:
-                    with st.spinner("Transcribing your audio..."):
-                        transcript = _transcribe_audio(audio_bytes)
-                    if transcript:
-                        st.session_state.last_audio_hash = audio_hash
-                        st.markdown(f"**Transcription:** {transcript}")
-                        handle_user_prompt(transcript)
-                        st.rerun()
-                    else:
-                        st.info("Could not transcribe that clip. Please try again.")
+                # Validate audio input before processing
+                is_valid, error_msg = _validate_audio_input(audio_bytes)
+                if not is_valid:
+                    st.error(f"⚠️ Invalid audio: {error_msg}")
                 else:
-                    st.caption("This recording was already processed. Record a new clip to retry.")
+                    audio_hash = hashlib.sha256(audio_bytes).hexdigest()
+                    if audio_hash != st.session_state.last_audio_hash:
+                        with st.spinner("Transcribing your audio..."):
+                            transcript = _transcribe_audio(audio_bytes)
+                        if transcript:
+                            st.session_state.last_audio_hash = audio_hash
+                            st.markdown(f"**Transcription:** {transcript}")
+                            handle_user_prompt(transcript)
+                            st.rerun()
+                        else:
+                            st.info("Could not transcribe that clip. Please try again.")
+                    else:
+                        st.caption("This recording was already processed. Record a new clip to retry.")
 
 # Chat input
 if prompt := st.chat_input("Ask me anything about your documents..."):
