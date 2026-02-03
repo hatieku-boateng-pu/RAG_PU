@@ -1,3 +1,4 @@
 /.env
 /.venv
 /info
+__pycache__/
