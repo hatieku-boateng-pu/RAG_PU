@@ -503,7 +503,13 @@ def _transcribe_audio(audio_bytes: bytes, mime_type: str | None = None) -> str |
 def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     if not text:
         return None, False
-    max_chars = int(os.getenv("OPENAI_TTS_MAX_CHARS", "2000"))
+    raw_max_chars = os.getenv("OPENAI_TTS_MAX_CHARS", "2000")
+    try:
+        max_chars = int(raw_max_chars)
+        if max_chars <= 0:
+            raise ValueError("OPENAI_TTS_MAX_CHARS must be positive")
+    except (TypeError, ValueError):
+        max_chars = 2000
     trimmed = text.strip()
     truncated = False
     if len(trimmed) > max_chars:
