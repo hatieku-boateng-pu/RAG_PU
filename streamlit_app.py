@@ -11,6 +11,7 @@ import os
 from dotenv import load_dotenv
 import time
 from datetime import date
+import re
 
 try:
     from streamlit.runtime.scriptrunner import get_script_run_ctx
@@ -485,6 +486,42 @@ def _transcribe_audio(audio_bytes: bytes) -> str | None:
         return None
 
 
+def _clean_text_for_tts(text: str) -> str:
+    """
+    Clean text for TTS by removing markdown formatting and sources section.
+    Extracts only the main content before the "**Sources:**" section.
+    """
+    if not text:
+        return text
+    
+    # Remove the sources section (everything from "**Sources:**" onwards)
+    if "**Sources:**" in text:
+        text = text.split("**Sources:**")[0].strip()
+    
+    # Remove markdown links but keep the link text: [text](url) -> text
+    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    
+    # Remove bold/italic markers: **text** or *text* -> text
+    text = re.sub(r'\*\*([^\*]+)\*\*', r'\1', text)
+    text = re.sub(r'\*([^\*]+)\*', r'\1', text)
+    
+    # Remove code blocks: `code` -> code
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    
+    # Remove headers: ## Header -> Header
+    text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
+    
+    # Remove bullet points and list markers
+    text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
+    text = re.sub(r'^\s*\d+\.\s+', '', text, flags=re.MULTILINE)
+    
+    # Clean up extra whitespace
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = text.strip()
+    
+    return text
+
+
 def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     if not text:
         return None, False
@@ -753,7 +790,8 @@ def handle_user_prompt(prompt: str):
         )
         st.markdown(response)
         if st.session_state.get("voice_chat_enabled") and not response.startswith("Error:"):
-            audio_bytes, truncated = _synthesize_speech(response)
+            cleaned_text = _clean_text_for_tts(response)
+            audio_bytes, truncated = _synthesize_speech(cleaned_text)
             if audio_bytes:
                 st.audio(audio_bytes, format="audio/mp3")
                 if truncated:
