@@ -1009,6 +1009,7 @@ if st.session_state.get("voice_chat_enabled") and hasattr(st, "audio_input"):
                         st.session_state.last_audio_hash = audio_hash
                         st.markdown(f"**Transcription:** {transcript}")
                         handle_user_prompt(transcript)
+                        st.rerun()
                     else:
                         st.info("Could not transcribe that clip. Please try again.")
                 else:
