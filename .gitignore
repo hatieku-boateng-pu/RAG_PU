@@ -1,3 +1,6 @@
 /.env
 /.venv
 /info
+__pycache__/
+*.pyc
+*.pyo
