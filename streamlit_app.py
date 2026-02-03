@@ -5,6 +5,8 @@ Interactive chat interface with OpenAI vector stores
 
 import streamlit as st
 from openai import OpenAI
+import hashlib
+import io
 import os
 from dotenv import load_dotenv
 import time
@@ -349,6 +351,9 @@ if "selected_vector_store" not in st.session_state:
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
+if "last_audio_hash" not in st.session_state:
+    st.session_state.last_audio_hash = None
+
 if "user_role" not in st.session_state:
     st.session_state.user_role = None
 
@@ -455,6 +460,24 @@ def create_thread():
         return thread.id
     except Exception as e:
         st.error(f"Error creating thread: {e}")
+        return None
+
+
+def _transcribe_audio(audio_bytes: bytes) -> str | None:
+    if not audio_bytes:
+        return None
+    try:
+        audio_file = io.BytesIO(audio_bytes)
+        audio_file.name = "voice-question.wav"
+        model = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
+        transcript = client.audio.transcriptions.create(
+            model=model,
+            file=audio_file,
+        )
+        text = getattr(transcript, "text", None)
+        return text.strip() if text else None
+    except Exception as e:
+        st.error(f"Error transcribing audio: {e}")
         return None
 
 
@@ -890,6 +913,26 @@ if st.session_state.pending_prompt:
     pending = st.session_state.pending_prompt
     st.session_state.pending_prompt = None
     handle_user_prompt(pending)
+
+# Voice input (optional)
+if hasattr(st, "audio_input"):
+    with st.expander("🎙️ Ask with your voice", expanded=False):
+        audio_prompt = st.audio_input("Record a question")
+        if audio_prompt is not None:
+            audio_bytes = (
+                audio_prompt.getvalue()
+                if hasattr(audio_prompt, "getvalue")
+                else audio_prompt.read()
+            )
+            if audio_bytes:
+                audio_hash = hashlib.sha256(audio_bytes).hexdigest()
+                if audio_hash != st.session_state.last_audio_hash:
+                    st.session_state.last_audio_hash = audio_hash
+                    with st.spinner("Transcribing your audio..."):
+                        transcript = _transcribe_audio(audio_bytes)
+                    if transcript:
+                        st.markdown(f"**Transcription:** {transcript}")
+                        handle_user_prompt(transcript)
 
 # Chat input
 if prompt := st.chat_input("Ask me anything about your documents..."):
