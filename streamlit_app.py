@@ -494,7 +494,7 @@ def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     if len(trimmed) > max_chars:
         truncated = True
         trimmed = trimmed[:max_chars].rsplit(" ", 1)[0] or trimmed[:max_chars]
-    model = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
+    model = os.getenv("OPENAI_TTS_MODEL", "tts-1")
     voice = os.getenv("OPENAI_TTS_VOICE", "alloy")
     try:
         speech = client.audio.speech.create(
