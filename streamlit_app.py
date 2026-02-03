@@ -508,7 +508,12 @@ def _synthesize_speech(text: str) -> tuple[bytes | None, bool]:
     truncated = False
     if len(trimmed) > max_chars:
         truncated = True
-        trimmed = trimmed[:max_chars].rsplit(" ", 1)[0] or trimmed[:max_chars]
+        segment = trimmed[:max_chars]
+        parts = segment.rsplit(" ", 1)
+        if len(parts) == 2:
+            trimmed = parts[0]
+        else:
+            trimmed = segment
     model = os.getenv("OPENAI_TTS_MODEL", "tts-1")
     voice = os.getenv("OPENAI_TTS_VOICE", "alloy")
     try:
