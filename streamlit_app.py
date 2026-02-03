@@ -432,7 +432,10 @@ Your role is to:
 -Always prioritize accuracy and cite your sources when answering questions.""",
 
             model=model_chat,
-            tools=[{"type": "file_search"}],
+            tools=[
+                {"type": "file_search"},
+                {"type": "code_interpreter"},
+            ],
             tool_resources={
                 "file_search": {
                     "vector_store_ids": [vector_store_id]
