@@ -5,8 +5,6 @@ Interactive chat interface with OpenAI vector stores
 
 import streamlit as st
 from openai import OpenAI
-import hashlib
-import io
 import os
 from dotenv import load_dotenv
 import time
@@ -351,12 +349,6 @@ if "selected_vector_store" not in st.session_state:
 if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
-if "last_audio_hash" not in st.session_state:
-    st.session_state.last_audio_hash = None
-
-if "voice_chat_enabled" not in st.session_state:
-    st.session_state.voice_chat_enabled = False
-
 if "user_role" not in st.session_state:
     st.session_state.user_role = None
 
@@ -440,10 +432,7 @@ Your role is to:
 -Always prioritize accuracy and cite your sources when answering questions.""",
 
             model=model_chat,
-            tools=[
-                {"type": "file_search"},
-                {"type": "code_interpreter"},
-            ],
+            tools=[{"type": "file_search"}],
             tool_resources={
                 "file_search": {
                     "vector_store_ids": [vector_store_id]
@@ -464,48 +453,6 @@ def create_thread():
     except Exception as e:
         st.error(f"Error creating thread: {e}")
         return None
-
-
-def _transcribe_audio(audio_bytes: bytes) -> str | None:
-    if not audio_bytes:
-        return None
-    try:
-        audio_file = io.BytesIO(audio_bytes)
-        audio_file.name = "voice-question.wav"
-        model = os.getenv("OPENAI_TRANSCRIBE_MODEL", "gpt-4o-mini-transcribe")
-        transcript = client.audio.transcriptions.create(
-            model=model,
-            file=audio_file,
-        )
-        text = getattr(transcript, "text", None)
-        return text.strip() if text else None
-    except Exception as e:
-        st.error(f"Error transcribing audio: {e}")
-        return None
-
-
-def _synthesize_speech(text: str) -> bytes | None:
-    if not text:
-        return None
-    if len(text) > 2000:
-        st.warning("Response is too long to synthesize. Try a shorter question for voice playback.")
-        return None
-    model = os.getenv("OPENAI_TTS_MODEL", "gpt-4o-mini-tts")
-    voice = os.getenv("OPENAI_TTS_VOICE", "alloy")
-    try:
-        speech = client.audio.speech.create(
-            model=model,
-            voice=voice,
-            input=text,
-            format="mp3",
-        )
-        if hasattr(speech, "read"):
-            return speech.read()
-        if hasattr(speech, "content"):
-            return speech.content
-    except Exception as e:
-        st.error(f"Error generating voice output: {e}")
-    return None
 
 
 def _is_link_request(user_message: str) -> bool:
@@ -748,10 +695,6 @@ def handle_user_prompt(prompt: str):
             st.session_state.selected_vector_store,
         )
         st.markdown(response)
-        if st.session_state.get("voice_chat_enabled"):
-            audio_bytes = _synthesize_speech(response)
-            if audio_bytes:
-                st.audio(audio_bytes, format="audio/mp3")
 
     st.session_state.messages.append({"role": "assistant", "content": response})
 
@@ -868,18 +811,6 @@ with st.sidebar:
     st.info(f"**Active Model:** {model_chat}")
     
     st.divider()
-
-    st.subheader("🎙️ Voice Chat")
-    voice_supported = hasattr(st, "audio_input")
-    st.session_state.voice_chat_enabled = st.toggle(
-        "Enable voice input and audio replies",
-        value=st.session_state.voice_chat_enabled,
-        disabled=not voice_supported,
-    )
-    if not voice_supported:
-        st.caption("Upgrade Streamlit to use voice input.")
-    else:
-        st.caption("Uses OpenAI audio transcription and TTS for affordable voice chat.")
     
     # Clear chat button
     if st.button("🗑️ Clear Chat History", use_container_width=True):
@@ -956,26 +887,6 @@ if st.session_state.pending_prompt:
     pending = st.session_state.pending_prompt
     st.session_state.pending_prompt = None
     handle_user_prompt(pending)
-
-# Voice input (optional)
-if st.session_state.get("voice_chat_enabled") and hasattr(st, "audio_input"):
-    with st.expander("🎙️ Ask with your voice", expanded=False):
-        audio_prompt = st.audio_input("Record a question")
-        if audio_prompt is not None:
-            audio_bytes = (
-                audio_prompt.getvalue()
-                if hasattr(audio_prompt, "getvalue")
-                else audio_prompt.read()
-            )
-            if audio_bytes:
-                audio_hash = hashlib.sha256(audio_bytes).hexdigest()
-                if audio_hash != st.session_state.last_audio_hash:
-                    st.session_state.last_audio_hash = audio_hash
-                    with st.spinner("Transcribing your audio..."):
-                        transcript = _transcribe_audio(audio_bytes)
-                    if transcript:
-                        st.markdown(f"**Transcription:** {transcript}")
-                        handle_user_prompt(transcript)
 
 # Chat input
 if prompt := st.chat_input("Ask me anything about your documents..."):
